@@ -40,7 +40,8 @@ found<-feat[grepl("std|mean",feat$V2),1]
 
 ##Uses descriptive activity names to name the activities in the data set.
 found_x<-total_x[,found]
-namesfeat<-feat[found,2]
+
+names(found_x)<-feat[found,2]
 newfound_x<-rbind(namesfeat,found_x)
 
 ##Appropriately labels the data set with descriptive variable names
@@ -57,24 +58,26 @@ names(total_y)<-"Activity"
 names(total_subject)<-"Subject"
 
 ## merging everything togather
-total_x_y_subject<-cbind(total_x,total_y,total_subject)
+total_x_y_subject<-cbind(found_x,total_y,total_subject)
 
 ##From the data set in step 4, creates a second, independent tidy data set 
 ##with the average of each variable for each activity and each subject.
-newt<- select(total_x_y_subject,Activity, Subject, V1:V561)
-newtap<-mutate(newta, unique_set = paste(Activity,"/",Subject))
-newtap<-select(newtap,Activity,Subject,unique_set, V1:V561)
+##newt<- select(total_x_y_subject,Activity, Subject, V1:V561)
+newtap<-mutate(total_x_y_subject, unique_set = paste(Activity,"/",Subject))
+
+newtap<-select(newtap,Activity,Subject,unique_set,`tBodyAcc-mean()-X`:`fBodyBodyGyroJerkMag-meanFreq()`)
 
 ##Avergages for all varuables by activity and subject combinatiod
-final_activity_subject<-aggregate(newtap[,4:564], list(newtap$unique_set),mean)
+final_activity_subject<-aggregate(newtap[,4:79], list(newtap$unique_set),mean)
 
 ##Avergages for all varuables by activity 
-final_activity<-aggregate(newtap[,4:564], list(newtap$Activity),mean)
+final_activity<-aggregate(newtap[,4:79], list(newtap$Activity),mean)
 
 ##Avergages for all varuables by subject
-final_subject<-aggregate(newtap[,4:564], list(newtap$Subject),mean)
+final_subject<-aggregate(newtap[,4:79], list(newtap$Subject),mean)
 
 ##saving results in Excel
 write.xlsx(final_activity_subject,"final_activity_subject.xlsx")
 write.xlsx(final_activity,"final_activity.xlsx")
 write.xlsx(final_subject,"final_subject.xlsx")
+
