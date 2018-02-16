@@ -1,0 +1,42 @@
+x_test<-read.table("X_test.txt")
+y_test<-read.table("y_test.txt")
+subject_test<-read.table("subject_test.txt")
+
+x_train<-read.table("X_train.txt")
+y_train<-read.table("y_train.txt")
+subject_train<-read.table("subject_train.txt")
+
+
+total_x<-rbind(x_test,x_train)
+total_y<-rbind(y_test,y_train)
+total_subject<-rbind(subject_test,subject_train)
+feat<-read.table("features.txt")
+feat$V2<-as.character(feat$V2)
+
+found<-feat[grepl("std|mean",feat$V2),1]
+
+found_x<-total_x[,found]
+
+names(found_x)<-feat[found,2]
+newfound_x<-rbind(namesfeat,found_x)
+
+act <- read.table("activity_labels.txt")
+
+act[total_y[,1],2]
+total_y[,1]<-act[total_y[,1],2]
+
+names(total_y)<-"Activity"
+names(total_subject)<-"Subject"
+
+total_x_y_subject<-cbind(found_x,total_y,total_subject)
+
+newtap<-mutate(total_x_y_subject, unique_set = paste(Activity,"/",Subject))
+
+newtap<-select(newtap,Activity,Subject,unique_set,`tBodyAcc-mean()-X`:`fBodyBodyGyroJerkMag-meanFreq()`)
+
+final_activity_subject<-aggregate(newtap[,4:79], list(newtap$unique_set),mean)
+
+these last two variables are optional
+
+final_activity<-aggregate(newtap[,4:79], list(newtap$Activity),mean)
+final_subject<-aggregate(newtap[,4:79], list(newtap$Subject),mean)
