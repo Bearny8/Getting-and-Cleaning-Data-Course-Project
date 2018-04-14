@@ -1,42 +1,32 @@
-x_test<-read.table("X_test.txt")
-y_test<-read.table("y_test.txt")
-subject_test<-read.table("subject_test.txt")
+Variables:
 
-x_train<-read.table("X_train.txt")
-y_train<-read.table("y_train.txt")
+Reading tables variables                
+
+traindatax<-read.table("X_train.txt")
+traindatay<-read.table("y_train.txt")
 subject_train<-read.table("subject_train.txt")
+testdatax<-read.table("X_test.txt")
+testdatay<-read.table("y_test.txt")
+subject_test<-read.table("subject_test.txt")
+columnnames<-read.table("features.txt")
+labels<-read.table("activity_labels.txt")
 
 
-total_x<-rbind(x_test,x_train)
-total_y<-rbind(y_test,y_train)
-total_subject<-rbind(subject_test,subject_train)
-feat<-read.table("features.txt")
-feat$V2<-as.character(feat$V2)
+Merging and Formating Data 
 
-found<-feat[grepl("std|mean",feat$V2),1]
-
-found_x<-total_x[,found]
-
-names(found_x)<-feat[found,2]
-newfound_x<-rbind(namesfeat,found_x)
-
-act <- read.table("activity_labels.txt")
-
-act[total_y[,1],2]
-total_y[,1]<-act[total_y[,1],2]
-
-names(total_y)<-"Activity"
-names(total_subject)<-"Subject"
-
-total_x_y_subject<-cbind(found_x,total_y,total_subject)
-
-newtap<-mutate(total_x_y_subject, unique_set = paste(Activity,"/",Subject))
-
-newtap<-select(newtap,Activity,Subject,unique_set,`tBodyAcc-mean()-X`:`fBodyBodyGyroJerkMag-meanFreq()`)
-
-final_activity_subject<-aggregate(newtap[,4:79], list(newtap$unique_set),mean)
-
-these last two variables are optional
-
-final_activity<-aggregate(newtap[,4:79], list(newtap$Activity),mean)
-final_subject<-aggregate(newtap[,4:79], list(newtap$Subject),mean)
+total_x<-rbind(traindatax,testdatax)
+tidy_data<-cbind(total_subject,apply_name_activitities)
+tidy_data_agg4<-aggregate(tidy_data[6:71], by = list(tidy_data$Subject,tidy_data$Activity),FUN = mean)
+tidy_data_final<-data.frame(tidy_data_agg4$Activity,tidy_data_agg4$Subject,tidy_data_agg4[,3:68])
+colnames(total_x)<-activity
+shorttable1<-total_x[ , !grepl( "meanF", names(total_x) ) ] 
+shorttable2<-shorttable1[ , grepl( "mean|std", names(shorttable1) ) ] 
+total_y<-rbind(traindatay,testdatay)
+total_y$id<-1:nrow(total_y)
+name_activities<-merge(total_y,labels, by = "V1", sort = FALSE)
+ordered <- name_activities[order(name_activities$id), ]
+apply_name_activitities<-cbind(name_activities, shorttable2)
+total_subject<-rbind(subject_train,subject_test)
+total_subject$id<-1:nrow(total_subject)
+columnnames$V2<-as.character(columnnames$V2)
+activity<-columnnames$V2
