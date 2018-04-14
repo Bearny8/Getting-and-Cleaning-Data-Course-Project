@@ -1,83 +1,75 @@
-## Get dplyr ready
-library(dplyr)
+## there will be two working directory, one for train and one for test
+setwd("~/R/Data Cleaning Project/UCI HAR Dataset/train")
 
-##set test directory
-setwd("~/UCI HAR Dataset/test")
-
-##read test files
-x_test<-read.table("X_test.txt")
-y_test<-read.table("y_test.txt")
-subject_test<-read.table("subject_test.txt")
-
-## set training directory
-setwd("~/UCI HAR Dataset/train")
-
-##read training files
-x_train<-read.table("X_train.txt")
-y_train<-read.table("y_train.txt")
+##reading tables                
+traindatax<-read.table("X_train.txt")
+traindatay<-read.table("y_train.txt")
 subject_train<-read.table("subject_train.txt")
 
 
-##Merges the training and the test sets to create one data set
-total_x<-rbind(x_test,x_train)
-total_y<-rbind(y_test,y_train)
-total_subject<-rbind(subject_test,subject_train)
+# changing working directory
+setwd("~/R/Data Cleaning Project/UCI HAR Dataset/test")
 
-##Extracts only the measurements on the mean
-##and standard deviation for each measurement.
+##reading tables
+testdatax<-read.table("X_test.txt")
+testdatay<-read.table("y_test.txt")
+subject_test<-read.table("subject_test.txt")
 
-##set features directory
-setwd("~/UCI HAR Dataset")
+# merging test and taining files
+total_x<-rbind(traindatax,testdatax)
+##summary(total_x)
+##str(total_x)
 
-##read features file
-feat<-read.table("features.txt")
+## changing working directoty one more time
+setwd("~/R/Data Cleaning Project/UCI HAR Dataset")
 
-##reformating as character
-feat$V2<-as.character(feat$V2)
+##creating column names using given variables
+columnnames<-read.table("features.txt")
+#formating as character
+columnnames$V2<-as.character(columnnames$V2)
 
-## getting only statndar deviation and mean measures
-found<-feat[grepl("std|mean",feat$V2),1]
+##creating one column object
+activity<-columnnames$V2
+## assigning column names
+colnames(total_x)<-activity
 
-##Uses descriptive activity names to name the activities in the data set.
-found_x<-total_x[,found]
+## removing columns that do not have 'mean' or 'std'
+## !!! I assume that measuremnets containing 'Mean Frequency' should be excluded
+shorttable1<-total_x[ , !grepl( "meanF", names(total_x) ) ] 
+shorttable2<-shorttable1[ , grepl( "mean|std", names(shorttable1) ) ] 
 
-names(found_x)<-feat[found,2]
-newfound_x<-rbind(namesfeat,found_x)
 
-##Appropriately labels the data set with descriptive variable names
 
-##reading labels 
-act <- read.table("activity_labels.txt")
+##assigning activity types
+total_y<-rbind(traindatay,testdatay)
+total_y$id<-1:nrow(total_y)
 
-##moving on
-act[total_y[,1],2]
-total_y[,1]<-act[total_y[,1],2]
+setwd("~/R/Data Cleaning Project/UCI HAR Dataset")
+labels<-read.table("activity_labels.txt")
+name_activities<-merge(total_y,labels, by = "V1", sort = FALSE)
+ordered <- name_activities[order(name_activities$id), ]
 
-## Naming columns
-names(total_y)<-"Activity"
-names(total_subject)<-"Subject"
+##applying activity names to the shorted table
+apply_name_activitities<-cbind(name_activities, shorttable2)
 
-## merging everything togather
-total_x_y_subject<-cbind(found_x,total_y,total_subject)
+##incorporating subject's info
+total_subject<-rbind(subject_train,subject_test)
+total_subject$id<-1:nrow(total_subject)
 
-##From the data set in step 4, creates a second, independent tidy data set 
-##with the average of each variable for each activity and each subject.
-##newt<- select(total_x_y_subject,Activity, Subject, V1:V561)
-newtap<-mutate(total_x_y_subject, unique_set = paste(Activity,"/",Subject))
+##creating tidy data set
+tidy_data<-cbind(total_subject,apply_name_activitities)
+names(tidy_data)[1]<-"Subject"
+names(tidy_data)[3]<-"Ac-ty Code"
+names(tidy_data)[5]<-"Activity"
 
-newtap<-select(newtap,Activity,Subject,unique_set,`tBodyAcc-mean()-X`:`fBodyBodyGyroJerkMag-meanFreq()`)
+tidy_data[1:50,1:8]
 
-##Avergages for all varuables by activity and subject combinatiod
-final_activity_subject<-aggregate(newtap[,4:79], list(newtap$unique_set),mean)
-
-##Avergages for all varuables by activity 
-final_activity<-aggregate(newtap[,4:79], list(newtap$Activity),mean)
-
-##Avergages for all varuables by subject
-final_subject<-aggregate(newtap[,4:79], list(newtap$Subject),mean)
-
-##saving results in Excel
-write.xlsx(final_activity_subject,"final_activity_subject.xlsx")
-write.xlsx(final_activity,"final_activity.xlsx")
-write.xlsx(final_subject,"final_subject.xlsx")
-
+tidy_data_agg4<-aggregate(tidy_data[6:71], by = list(tidy_data$Subject,tidy_data$Activity),FUN = mean)
+names(tidy_data_agg4)[1]<-"Subject"
+names(tidy_data_agg4)[2]<-"Activity"
+tidy_data_agg4[1:50,1:5]
+newone<-data.frame(tidy_data_agg4$Activity,tidy_data_agg4$Subject,tidy_data_agg4[,3:68])
+names(newone)[1]<-"Activity"
+names(newone)[3]<-"Subject"
+newone[1:35,1:4]
+write.csv(newone,"newone.csv")
